@@ -1,0 +1,94 @@
+version: '3.1'
+
+services:
+
+  auth-db:
+    container_name: auth-db
+    image: postgres
+    networks:
+      - auth
+    environment:
+      POSTGRES_PASSWORD: '123456'
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+
+  token-redis:
+    container_name: token-redis
+    image: redis:latest
+    networks:
+      - auth
+    environment:
+      REDIS_PASSWORD: '123456'
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/redis/data
+
+  stateless-auth-api:
+    build: './stateless/stateless-auth-api'
+    container_name: stateless-auth-api
+    depends_on:
+      - auth-db
+    environment:
+      - PORT=8080
+      - DB_PORT=5432
+      - DB_HOST=auth-db
+      - DB_NAME=stateless_auth
+      - DB_USER=postgres
+      - DB_PASSWORD=123456
+      - JWT_SECRET_KEY=RmlsaXBlbnNlcyAyOjEyIGRlc2Vudm9sdmVpIGEgdm9zc2Egc2FsdmHDp8OjbyBjb20gdGVtb3IgZSB0cmVtb3I=
+    networks:
+      - auth
+    ports:
+      - '8080:8080'
+
+  stateless-any-api:
+    build: './stateless/stateless-any-api'
+    container_name: stateless-any-api
+    environment:
+      - PORT=8081
+      - JWT_SECRET_KEY=RmlsaXBlbnNlcyAyOjEyIGRlc2Vudm9sdmVpIGEgdm9zc2Egc2FsdmHDp8OjbyBjb20gdGVtb3IgZSB0cmVtb3I=
+    networks:
+      - auth
+    ports:
+      - '8081:8081'
+
+  stateful-auth-api:
+    build: './stateful/stateful-auth-api'
+    container_name: stateful-auth-api
+    depends_on:
+      - auth-db
+    environment:
+      - PORT=8082
+      - DB_PORT=5432
+      - DB_HOST=auth-db
+      - DB_NAME=stateful_auth
+      - DB_USER=postgres
+      - DB_PASSWORD=123456
+      - REDIS_HOST=token-redis
+      - REDIS_PORT=6379
+    networks:
+      - auth
+    ports:
+      - '8082:8082'
+
+  stateful-any-api:
+    build: './stateful/stateful-any-api'
+    container_name: stateful-any-api
+    environment:
+      - PORT=8083
+      - SATEFUL_AUTH_BASE_URL=http://stateful-auth-api:8082
+    networks:
+      - auth
+    ports:
+      - '8083:8083'
+
+networks:
+  auth:
+    driver: bridge
+
+volumes:
+  postgresdata:
+  redisdata:

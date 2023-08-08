@@ -1,0 +1,17 @@
+cd C:\areatrabalho\projetos\eclipse_sts\autenticacao-stateful-stateless-microsservicos\stateless\stateless-auth-api
+mvn clean install
+cd ..
+cd stateless-any-api
+mvn clean install
+cd ..
+cd ..
+cd stateful\stateful-auth-api
+mvn clean install
+cd ..
+cd stateful-any-api
+mvn clean install
+cd ..
+cd ..
+docker-compose down
+docker-compose up -d
+exit
